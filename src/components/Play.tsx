@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bot, Users, Undo2, Lightbulb, Settings, Target, Trophy, Coins, Loader2 } from 'lucide-react';
+import { Bot, Users, Undo2, Lightbulb, Settings, Target, Trophy, Coins, Loader2, Globe } from 'lucide-react';
 
 const INDIAN_NAMES = ['Rahul Sharma', 'Priya Das', 'Amit Kumar', 'Neha Singh', 'Vikram Malhotra', 'Riya Kapoor', 'Aditya Rao', 'Kavya Tiwari'];
+
+// Sound Effects
+const playSound = (type: 'place' | 'win') => {
+  try {
+    const audio = new Audio(
+      type === 'place' 
+        ? 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3' 
+        : 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'
+    );
+    audio.volume = type === 'place' ? 0.5 : 0.8;
+    audio.play().catch(e => console.log('Audio play failed:', e));
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
 
 const Confetti = () => {
   return (
@@ -108,7 +123,7 @@ const BoardCell = memo(({ cell, index, onClick, disabled, gameState }: any) => (
 
 export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, setLastRewardedAdTime }: any) {
   const [gameState, setGameState] = useState('start'); // start, playing, thinking, end
-  const [gameMode, setGameMode] = useState<'computer' | 'friend'>('computer');
+  const [gameMode, setGameMode] = useState<'computer' | 'friend' | 'online'>('computer');
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [opponentName, setOpponentName] = useState('');
@@ -118,7 +133,7 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
   const [rewardCooldown, setRewardCooldown] = useState(0);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
 
-  const startGame = (mode: 'computer' | 'friend') => {
+  const startGame = (mode: 'computer' | 'friend' | 'online') => {
     if (data.coins < 20) {
       alert('Not enough coins! You need 20 coins to play.');
       return;
@@ -126,12 +141,23 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
     
     if (navigator.vibrate) navigator.vibrate(50);
     
+    deductCoins(20, 'Match Entry Fee');
     setGameMode(mode);
-    setOpponentName(mode === 'computer' ? INDIAN_NAMES[Math.floor(Math.random() * INDIAN_NAMES.length)] : 'Player 2');
-    setGameState('matching');
+    setOpponentName(mode === 'friend' ? 'Player 2' : INDIAN_NAMES[Math.floor(Math.random() * INDIAN_NAMES.length)]);
     
-    setTimeout(() => {
-      deductCoins(20, 'Match Entry Fee');
+    if (mode === 'online') {
+      setGameState('matching');
+      setTimeout(() => {
+        setBoard(Array(9).fill(null));
+        setIsPlayerTurn(true);
+        setWinner(null);
+        setGameState('playing');
+        setTimeLeft(15);
+        setRewardClaimed(false);
+        setIsWatchingAd(false);
+        setRewardCooldown(0);
+      }, 1800);
+    } else {
       setBoard(Array(9).fill(null));
       setIsPlayerTurn(true);
       setWinner(null);
@@ -140,7 +166,7 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
       setRewardClaimed(false);
       setIsWatchingAd(false);
       setRewardCooldown(0);
-    }, 1800);
+    }
   };
 
   const checkWinner = (squares: any[]) => {
@@ -161,7 +187,9 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
 
   const handlePlayerMove = (index: number) => {
     if (gameState !== 'playing' || board[index]) return;
-    if (gameMode === 'computer' && !isPlayerTurn) return;
+    if ((gameMode === 'computer' || gameMode === 'online') && !isPlayerTurn) return;
+    
+    playSound('place');
     
     const newBoard = [...board];
     newBoard[index] = isPlayerTurn ? 'O' : 'X';
@@ -211,15 +239,18 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
       console.error('AI Move failed, using smart fallback', e);
     }
 
-    // Ensure a minimum delay of 600ms so it doesn't feel instant, but remove the 2.5s lag
+    // Ensure a minimum delay. Online mode has a longer delay to simulate human thinking.
+    const minDelay = gameMode === 'online' ? 1500 + Math.random() * 1000 : 600;
     const elapsed = Date.now() - startTime;
-    if (elapsed < 600) {
-      await new Promise(resolve => setTimeout(resolve, 600 - elapsed));
+    if (elapsed < minDelay) {
+      await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
     }
 
     setBoard(prevBoard => {
       const newBoard = [...prevBoard];
       newBoard[moveIndex] = 'X';
+      
+      playSound('place');
       
       const win = checkWinner(newBoard);
       if (win) {
@@ -231,10 +262,10 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
       }
       return newBoard;
     });
-  }, [board]);
+  }, [board, gameMode]);
 
   useEffect(() => {
-    if (gameState === 'thinking' && gameMode === 'computer') {
+    if (gameState === 'thinking' && (gameMode === 'computer' || gameMode === 'online')) {
       makeAIMove();
     }
   }, [gameState, makeAIMove, gameMode]);
@@ -253,7 +284,7 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
 
   useEffect(() => {
     if (timeLeft <= 0 && gameState === 'playing') {
-      if (gameMode === 'computer' && isPlayerTurn) {
+      if ((gameMode === 'computer' || gameMode === 'online') && isPlayerTurn) {
         endGame('X');
       } else if (gameMode === 'friend') {
         endGame(isPlayerTurn ? 'X' : 'O');
@@ -265,6 +296,15 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
     setWinner(result);
     setGameState('end');
     updateStats(result === 'O');
+    
+    if (result === 'O') {
+      addCoins(30, 'Match Win');
+    }
+    
+    if (result === 'O' || result === 'X') {
+      playSound('win');
+    }
+    
     if (result === 'O' && navigator.vibrate) {
       navigator.vibrate([100, 50, 100, 50, 200]);
     } else if (navigator.vibrate) {
@@ -285,18 +325,12 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
   useEffect(() => {
     if (isWatchingAd && rewardCooldown <= 0) {
       setIsWatchingAd(false);
-      addCoins(30, 'Match Win Reward');
+      addCoins(20, 'Extra Ad Reward');
       setRewardClaimed(true);
-      setLastRewardedAdTime(Date.now());
     }
-  }, [isWatchingAd, rewardCooldown, addCoins, setLastRewardedAdTime]);
+  }, [isWatchingAd, rewardCooldown, addCoins]);
 
   const handleRewardAd = () => {
-    const now = Date.now();
-    if (now - data.lastRewardedAdTime < 60000) {
-      alert('Please wait before watching another ad.');
-      return;
-    }
     setIsWatchingAd(true);
     setRewardCooldown(3);
   };
@@ -341,7 +375,12 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
                   <p className="text-sm font-black text-amber-600">30</p>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100/50 rounded-2xl p-3 flex flex-col items-center justify-center shadow-sm">
-                  <Coins size={20} className="text-emerald-500 mb-1" />
+                  <svg viewBox="0 0 100 100" className="w-6 h-6 mb-1 drop-shadow-sm">
+                    <circle cx="50" cy="50" r="50" fill="#F59E0B" />
+                    <circle cx="50" cy="50" r="46" fill="#FDE047" />
+                    <circle cx="50" cy="50" r="34" fill="#FACC15" />
+                    <text x="50" y="68" fontSize="52" fontFamily="Arial, sans-serif" fontWeight="900" fill="#F59E0B" textAnchor="middle">$</text>
+                  </svg>
                   <p className="text-[10px] text-slate-500 font-bold uppercase">Balance</p>
                   <motion.p 
                     key={data.coins}
@@ -374,6 +413,18 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
                   <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-[14px] flex items-center justify-center space-x-3 text-purple-600 group-hover:bg-white/80 transition-colors">
                     <Users size={24} />
                     <span className="text-lg">Vs Friend</span>
+                  </div>
+                </motion.button>
+
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => startGame('online')}
+                  className="w-full relative p-[2px] rounded-2xl font-bold shadow-sm transition-all flex items-center justify-center group overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-[14px] flex items-center justify-center space-x-3 text-blue-600 group-hover:bg-white/80 transition-colors">
+                    <Globe size={24} />
+                    <span className="text-lg">Vs Online</span>
                   </div>
                 </motion.button>
               </div>
@@ -472,7 +523,7 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
                   index={index}
                   cell={cell}
                   onClick={handlePlayerMove}
-                  disabled={gameState !== 'playing' || (gameMode === 'computer' && !isPlayerTurn) || cell !== null}
+                  disabled={gameState !== 'playing' || ((gameMode === 'computer' || gameMode === 'online') && !isPlayerTurn) || cell !== null}
                   gameState={gameState}
                 />
               ))}
@@ -500,16 +551,16 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
                   className="w-full space-y-4"
                 >
                   {winner === 'O' && !rewardClaimed && (
-                    <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-2xl p-4 text-center mb-4 shadow-sm">
-                      <p className="text-purple-600 font-bold mb-3">Claim your 30 Coins reward!</p>
+                    <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-2xl p-4 text-center mb-4 shadow-sm">
+                      <p className="text-emerald-600 font-bold mb-3">You won 30 Coins! 🎉</p>
                       <button 
                         onClick={handleRewardAd}
                         disabled={isWatchingAd}
                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all ${
-                          isWatchingAd ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-md hover:shadow-lg active:scale-95'
+                          isWatchingAd ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md hover:shadow-lg active:scale-95'
                         }`}
                       >
-                        <span>Add Coin 📺</span>
+                        <span>Watch Ad for +20 Extra 📺</span>
                         {isWatchingAd && <span>({rewardCooldown}s)</span>}
                       </button>
                       <div id="ad-rewarded" className="hidden"></div>

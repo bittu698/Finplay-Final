@@ -25,6 +25,16 @@ const aiPlayers = [
 ];
 
 export function Leaderboard({ data }: { data: any }) {
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+  
+  const allPlayers = [
+    ...aiPlayers.map(p => ({ ...p, isUser: false, profilePic: null })),
+    { name: 'You', level: 1, coins: data.coins, isUser: true, profilePic: data.profilePic }
+  ].sort((a, b) => b.coins - a.coins);
+
+  const userRank = allPlayers.findIndex(p => p.isUser) + 1;
+  const displayPlayers = allPlayers.slice(0, 20);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -35,19 +45,23 @@ export function Leaderboard({ data }: { data: any }) {
         <h1 className="text-3xl font-black text-purple-600 tracking-widest uppercase mb-1">Leaderboard</h1>
         <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">Top 20 Rank Holders</p>
         <div className="mt-2 inline-block bg-purple-100 border border-purple-200 rounded-full px-4 py-1 text-xs font-bold text-purple-600">
-          March
+          {currentMonth}
         </div>
       </div>
 
       <div className="flex justify-center items-end space-x-2 sm:space-x-4 mb-8 px-2 sm:px-4 mt-4">
         {/* 2nd Place */}
         <div className="flex flex-col items-center relative w-[30%]">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-slate-100 border-4 border-slate-300 flex items-center justify-center text-xl sm:text-2xl font-bold text-slate-500 shadow-md z-10">
-            {aiPlayers[1].name.charAt(0)}
+          <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full ${displayPlayers[1].isUser ? 'bg-purple-100 border-purple-400 text-purple-600' : 'bg-slate-100 border-slate-300 text-slate-500'} border-4 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-md z-10 overflow-hidden`}>
+            {displayPlayers[1].isUser && displayPlayers[1].profilePic ? (
+              <img src={displayPlayers[1].profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              displayPlayers[1].name.charAt(0)
+            )}
           </div>
           <div className="bg-white border border-slate-200 rounded-lg px-2 pb-4 pt-3 mt-[-10px] text-center z-0 w-full shadow-sm">
-            <p className="text-[10px] sm:text-xs font-bold text-slate-700 truncate">{aiPlayers[1].name}</p>
-            <p className="text-[10px] sm:text-xs font-black text-amber-500">{aiPlayers[1].coins}</p>
+            <p className="text-[10px] sm:text-xs font-bold text-slate-700 truncate">{displayPlayers[1].name}</p>
+            <p className="text-[10px] sm:text-xs font-black text-amber-500">{displayPlayers[1].coins}</p>
           </div>
           <div className="absolute -bottom-3 w-6 h-6 bg-slate-300 rounded-full flex items-center justify-center text-xs font-black text-white border-2 border-white z-20 shadow-sm">2</div>
         </div>
@@ -55,43 +69,55 @@ export function Leaderboard({ data }: { data: any }) {
         {/* 1st Place */}
         <div className="flex flex-col items-center relative -translate-y-4 w-[35%]">
           <div className="absolute -top-6 text-3xl z-20 drop-shadow-md">👑</div>
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-100 border-4 border-amber-400 flex items-center justify-center text-2xl sm:text-3xl font-bold text-amber-500 shadow-lg z-10">
-            {aiPlayers[0].name.charAt(0)}
+          <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${displayPlayers[0].isUser ? 'bg-purple-100 border-purple-400 text-purple-600' : 'bg-amber-100 border-amber-400 text-amber-500'} border-4 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg z-10 overflow-hidden`}>
+            {displayPlayers[0].isUser && displayPlayers[0].profilePic ? (
+              <img src={displayPlayers[0].profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              displayPlayers[0].name.charAt(0)
+            )}
           </div>
           <div className="bg-white border border-amber-200 rounded-lg px-2 pb-4 pt-3 mt-[-10px] text-center z-0 w-full shadow-md">
-            <p className="text-[11px] sm:text-sm font-bold text-slate-800 truncate">{aiPlayers[0].name}</p>
-            <p className="text-[11px] sm:text-sm font-black text-amber-500">{aiPlayers[0].coins}</p>
+            <p className="text-[11px] sm:text-sm font-bold text-slate-800 truncate">{displayPlayers[0].name}</p>
+            <p className="text-[11px] sm:text-sm font-black text-amber-500">{displayPlayers[0].coins}</p>
           </div>
           <div className="absolute -bottom-3 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-sm font-black text-white border-2 border-white z-20 shadow-sm">1</div>
         </div>
 
         {/* 3rd Place */}
         <div className="flex flex-col items-center relative w-[30%]">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-orange-50 border-4 border-orange-300 flex items-center justify-center text-xl sm:text-2xl font-bold text-orange-400 shadow-md z-10">
-            {aiPlayers[2].name.charAt(0)}
+          <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full ${displayPlayers[2].isUser ? 'bg-purple-100 border-purple-400 text-purple-600' : 'bg-orange-50 border-orange-300 text-orange-400'} border-4 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-md z-10 overflow-hidden`}>
+            {displayPlayers[2].isUser && displayPlayers[2].profilePic ? (
+              <img src={displayPlayers[2].profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              displayPlayers[2].name.charAt(0)
+            )}
           </div>
           <div className="bg-white border border-orange-200 rounded-lg px-2 pb-4 pt-3 mt-[-10px] text-center z-0 w-full shadow-sm">
-            <p className="text-[10px] sm:text-xs font-bold text-slate-700 truncate">{aiPlayers[2].name}</p>
-            <p className="text-[10px] sm:text-xs font-black text-amber-500">{aiPlayers[2].coins}</p>
+            <p className="text-[10px] sm:text-xs font-bold text-slate-700 truncate">{displayPlayers[2].name}</p>
+            <p className="text-[10px] sm:text-xs font-black text-amber-500">{displayPlayers[2].coins}</p>
           </div>
           <div className="absolute -bottom-3 w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center text-xs font-black text-white border-2 border-white z-20 shadow-sm">3</div>
         </div>
       </div>
 
       <div className="px-4 mb-4">
-        <BannerAd id="ad-leaderboard" />
+        <BannerAd id="ad-leaderboard" type="chart" />
       </div>
 
       <div className="flex-1 overflow-hidden mx-4 space-y-2">
-        {aiPlayers.slice(3, 20).map((p, i) => (
-          <div key={i} className="flex items-center p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
-            <div className="w-8 text-center font-black text-slate-400">
+        {displayPlayers.slice(3, 20).map((p, i) => (
+          <div key={i} className={`flex items-center p-3 rounded-xl bg-white border ${p.isUser ? 'border-purple-300 shadow-md ring-1 ring-purple-100' : 'border-slate-100 shadow-sm'}`}>
+            <div className={`w-8 text-center font-black ${p.isUser ? 'text-purple-600' : 'text-slate-400'}`}>
               {i + 4}
             </div>
-            <div className="w-10 h-10 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center font-bold text-purple-600 mx-3">
-              {p.name.charAt(0)}
+            <div className="w-10 h-10 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center font-bold text-purple-600 mx-3 overflow-hidden">
+              {p.isUser && p.profilePic ? (
+                <img src={p.profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                p.name.charAt(0)
+              )}
             </div>
-            <div className="flex-1 font-bold text-slate-700">
+            <div className={`flex-1 font-bold ${p.isUser ? 'text-purple-700' : 'text-slate-700'}`}>
               {p.name}
             </div>
             <div className="text-right font-black text-amber-500">
@@ -113,7 +139,7 @@ export function Leaderboard({ data }: { data: any }) {
             </div>
             <div>
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Your Rank</p>
-              <p className="font-black text-slate-800 text-xl">16</p>
+              <p className="font-black text-slate-800 text-xl">#{userRank}</p>
             </div>
           </div>
           <div className="text-right">

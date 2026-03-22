@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { BannerAd } from './Adsterra';
 import { motion } from 'motion/react';
+import { Coins } from 'lucide-react';
 
-export function Wallet({ data, addCoins, setLastDailyBonusTime }: any) {
+export function Wallet({ data, addCoins, setLastDailyBonusTime, incrementDailyAds }: any) {
   const canClaimBonus = Date.now() - data.lastDailyBonusTime > 24 * 60 * 60 * 1000;
-  const [adsWatched, setAdsWatched] = useState(0);
+  const adsWatched = data.dailyAdsWatched || 0;
 
   const handleDailyBonus = () => {
     if (canClaimBonus) {
@@ -14,9 +15,9 @@ export function Wallet({ data, addCoins, setLastDailyBonusTime }: any) {
   };
 
   const handleWatchAd = () => {
-    if (adsWatched < 29) {
+    if (adsWatched < 20) {
       addCoins(20, 'Rewarded Ad');
-      setAdsWatched(prev => prev + 1);
+      incrementDailyAds();
     }
   };
 
@@ -31,9 +32,19 @@ export function Wallet({ data, addCoins, setLastDailyBonusTime }: any) {
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-50 rounded-full -ml-10 -mb-10 blur-2xl"></div>
         
         <p className="text-slate-500 text-sm font-medium mb-1 relative z-10">Total Balance</p>
-        <div className="flex items-end space-x-2 mb-6 relative z-10">
-          <span className="text-5xl font-black text-purple-600 drop-shadow-sm">{data.coins}</span>
-          <span className="text-slate-400 font-bold mb-1">Coins</span>
+        <div className="flex items-end space-x-3 mb-6 relative z-10">
+          <div className="bg-amber-100 p-2.5 rounded-full border-2 border-amber-300 shadow-sm">
+            <svg viewBox="0 0 100 100" className="w-8 h-8 drop-shadow-sm">
+              <circle cx="50" cy="50" r="50" fill="#F59E0B" />
+              <circle cx="50" cy="50" r="46" fill="#FDE047" />
+              <circle cx="50" cy="50" r="34" fill="#FACC15" />
+              <text x="50" y="68" fontSize="52" fontFamily="Arial, sans-serif" fontWeight="900" fill="#F59E0B" textAnchor="middle">$</text>
+            </svg>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="text-5xl font-black text-purple-600 drop-shadow-sm">{data.coins}</span>
+            <span className="text-slate-400 font-bold mb-1">Coins</span>
+          </div>
         </div>
         
         <button 
@@ -51,18 +62,22 @@ export function Wallet({ data, addCoins, setLastDailyBonusTime }: any) {
 
       <BannerAd id="ad-wallet" />
 
-      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm mb-6 flex items-center justify-between">
-        <div>
-          <h3 className="font-bold text-slate-800">Watch Ads</h3>
-          <p className="text-xs text-slate-500">Earn 20 coins per ad ({29 - adsWatched}/29 left)</p>
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-5 shadow-lg mb-6 flex items-center justify-between relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+        <div className="relative z-10">
+          <h3 className="font-black text-white text-lg flex items-center space-x-2">
+            <span>Watch Ads</span>
+            <span className="bg-amber-400 text-amber-900 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Hot</span>
+          </h3>
+          <p className="text-sm text-purple-100 font-medium mt-1">Earn 20 coins per ad ({20 - adsWatched}/20 left)</p>
         </div>
         <button 
           onClick={handleWatchAd}
-          disabled={adsWatched >= 29}
-          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-            adsWatched < 29 
-              ? 'bg-purple-100 text-purple-600 hover:bg-purple-200 active:scale-95' 
-              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+          disabled={adsWatched >= 20}
+          className={`relative z-10 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-md ${
+            adsWatched < 20 
+              ? 'bg-white text-purple-600 hover:bg-slate-50 active:scale-95' 
+              : 'bg-white/20 text-white/50 cursor-not-allowed shadow-none'
           }`}
         >
           Watch (20)

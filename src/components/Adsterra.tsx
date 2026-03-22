@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 
-export function BannerAd({ id }: { id: string }) {
+export function BannerAd({ id, type = 'banner' }: { id: string, type?: 'banner' | 'chart' }) {
+  if (type === 'chart') {
+    return (
+      <div className="flex justify-center my-4 w-full">
+        <div id={id} className="w-full max-w-[320px] rounded-xl overflow-hidden shadow-sm">
+          <img src="https://i.ibb.co/6c257bNn/chart.jpg" alt="Chart" className="w-full h-auto object-cover" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex justify-center my-2 w-full">
-      <div id={id} className="w-[320px] h-[50px] bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-medium rounded-lg overflow-hidden border border-gray-300 border-dashed">
-        Adsterra Banner ({id}) 320x50
+    <div className="flex justify-center my-4 w-full">
+      <div id={id} className="w-[300px] h-[250px] bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-medium rounded-xl overflow-hidden border border-slate-200 border-dashed shadow-sm text-center">
+        Adsterra Banner ({id})<br/>300x250
       </div>
     </div>
   );
@@ -14,12 +24,12 @@ let lastInterstitialTime = 0;
 
 export function InterstitialAd({ show, onClose }: { show: boolean, onClose: () => void }) {
   const [canSkip, setCanSkip] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(3);
 
   useEffect(() => {
     if (show) {
       setCanSkip(false);
-      setTimeLeft(5);
+      setTimeLeft(3);
     }
   }, [show]);
 

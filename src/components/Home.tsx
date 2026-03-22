@@ -8,6 +8,13 @@ const winners = [
 ];
 
 export function Home({ navigateTo }: { navigateTo: (tab: string) => void }) {
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysLeft = endOfMonth.getDate() - now.getDate();
+  const hoursLeft = 23 - now.getHours();
+  const minutesLeft = 59 - now.getMinutes();
+  const currentMonth = now.toLocaleString('default', { month: 'long' });
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -24,17 +31,11 @@ export function Home({ navigateTo }: { navigateTo: (tab: string) => void }) {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div>
-            <h3 className="text-pink-600 font-bold text-xs uppercase tracking-wider mb-0.5">Season 5 Ends In</h3>
-            <p className="text-slate-800 font-mono font-bold text-lg tracking-tight">03d : 14h : 42m</p>
+            <h3 className="text-pink-600 font-bold text-xs uppercase tracking-wider mb-0.5">{currentMonth} Season Ends In</h3>
+            <p className="text-slate-800 font-mono font-bold text-lg tracking-tight">
+              {daysLeft.toString().padStart(2, '0')}d : {hoursLeft.toString().padStart(2, '0')}h : {minutesLeft.toString().padStart(2, '0')}m
+            </p>
           </div>
-        </div>
-        <div className="relative z-10">
-          <button 
-            onClick={() => navigateTo('leaderboard')}
-            className="bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95"
-          >
-            View Ranks
-          </button>
         </div>
       </div>
       
