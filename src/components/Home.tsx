@@ -21,7 +21,7 @@ export function Home({ navigateTo }: { navigateTo: (tab: string) => void }) {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col space-y-6 pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen"
     >
-      <BannerAd id="ad-top" />
+      <BannerAd id="ad-top" type="mini" />
 
       {/* Season Ends Banner */}
       <div className="bg-white rounded-2xl p-4 flex items-center justify-between border border-pink-200 shadow-md relative overflow-hidden mt-2">
@@ -85,7 +85,7 @@ export function Home({ navigateTo }: { navigateTo: (tab: string) => void }) {
         <p className="text-sm text-slate-600 font-medium relative z-10">Rahul won <span className="text-pink-600 font-bold">30 coins</span> just now!</p>
       </div>
 
-      <BannerAd id="ad-bottom" />
+      <BannerAd id="ad-bottom" type="mini" />
     </motion.div>
   );
 }

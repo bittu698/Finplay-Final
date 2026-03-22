@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, memo } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bot, Users, Undo2, Lightbulb, Settings, Target, Trophy, Coins, Loader2, Globe } from 'lucide-react';
 
@@ -67,7 +66,7 @@ const getBestFallbackMove = (currentBoard: any[]) => {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     const line = [currentBoard[a], currentBoard[b], currentBoard[c]];
-    if (line.filter(v => v === 'O').length === 2 && line.filter(v => v === null).length === 1) {
+    if (line.filter(v => v === 'X').length === 2 && line.filter(v => v === null).length === 1) {
       return lines[i][line.indexOf(null)];
     }
   }
@@ -76,7 +75,7 @@ const getBestFallbackMove = (currentBoard: any[]) => {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     const line = [currentBoard[a], currentBoard[b], currentBoard[c]];
-    if (line.filter(v => v === 'X').length === 2 && line.filter(v => v === null).length === 1) {
+    if (line.filter(v => v === 'O').length === 2 && line.filter(v => v === null).length === 1) {
       return lines[i][line.indexOf(null)];
     }
   }
@@ -199,7 +198,7 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
     if (win) {
       endGame(win);
     } else {
-      if (gameMode === 'computer') {
+      if (gameMode === 'computer' || gameMode === 'online') {
         setIsPlayerTurn(false);
         setGameState('thinking');
       } else {
@@ -213,55 +212,28 @@ export function Play({ data, addCoins, deductCoins, updateStats, navigateTo, set
     const emptyIndices = board.map((val, idx) => val === null ? idx : null).filter(val => val !== null) as number[];
     if (emptyIndices.length === 0) return;
 
-    let moveIndex = getBestFallbackMove(board); // Smart Fallback
-
-    const startTime = Date.now();
-    try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey && apiKey !== "YOUR_GEMINI_API_KEY") {
-        const ai = new GoogleGenAI({ apiKey });
-        const boardStr = board.map(v => v || '-').join(',');
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: `Current board (0-8): [${boardStr}]. What is your move?`,
-          config: {
-            systemInstruction: "You are an expert Tic Tac Toe AI playing as 'X'. The player is 'O'. Empty spaces are '-'. Your goal is to win or block 'O' from winning. Respond ONLY with a single digit (0-8) representing the index of your optimal move. Do not include any other text.",
-            temperature: 0.1,
-          }
-        });
-        const text = response.text?.trim() || '';
-        const parsedMove = parseInt(text);
-        if (!isNaN(parsedMove) && emptyIndices.includes(parsedMove)) {
-          moveIndex = parsedMove;
-        }
-      }
-    } catch (e) {
-      console.error('AI Move failed, using smart fallback', e);
-    }
+    let moveIndex = getBestFallbackMove(board); // Smart AI Move
 
     // Ensure a minimum delay. Online mode has a longer delay to simulate human thinking.
-    const minDelay = gameMode === 'online' ? 1500 + Math.random() * 1000 : 600;
-    const elapsed = Date.now() - startTime;
-    if (elapsed < minDelay) {
-      await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
-    }
+    // Computer mode has a short delay for smooth gameplay.
+    const minDelay = gameMode === 'online' ? 1500 + Math.random() * 1000 : 500;
+    
+    await new Promise(resolve => setTimeout(resolve, minDelay));
 
-    setBoard(prevBoard => {
-      const newBoard = [...prevBoard];
-      newBoard[moveIndex] = 'X';
-      
-      playSound('place');
-      
-      const win = checkWinner(newBoard);
-      if (win) {
-        endGame(win);
-      } else {
-        setIsPlayerTurn(true);
-        setGameState('playing');
-        setTimeLeft(15);
-      }
-      return newBoard;
-    });
+    const newBoard = [...board];
+    newBoard[moveIndex] = 'X';
+    setBoard(newBoard);
+    
+    playSound('place');
+    
+    const win = checkWinner(newBoard);
+    if (win) {
+      endGame(win);
+    } else {
+      setIsPlayerTurn(true);
+      setGameState('playing');
+      setTimeLeft(15);
+    }
   }, [board, gameMode]);
 
   useEffect(() => {

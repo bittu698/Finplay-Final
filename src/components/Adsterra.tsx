@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
 
-export function BannerAd({ id, type = 'banner' }: { id: string, type?: 'banner' | 'chart' }) {
+export function BannerAd({ id, type = 'banner' }: { id: string, type?: 'banner' | 'chart' | 'mini' }) {
   if (type === 'chart') {
     return (
       <div className="flex justify-center my-4 w-full">
         <div id={id} className="w-full max-w-[320px] rounded-xl overflow-hidden shadow-sm">
           <img src="https://i.ibb.co/6c257bNn/chart.jpg" alt="Chart" className="w-full h-auto object-cover" />
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'mini') {
+    return (
+      <div className="flex justify-center my-2 w-full">
+        <div id={id} className="w-[300px] h-[100px] bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-medium rounded-xl overflow-hidden border border-slate-200 border-dashed shadow-sm text-center">
+          Adsterra Banner ({id})<br/>300x100
         </div>
       </div>
     );
